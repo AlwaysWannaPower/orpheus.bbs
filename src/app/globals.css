@@ -1,26 +1,568 @@
+/* ==========================================================================
+   src/app/globals.css — ОСНОВА ДИЗАЙН-СИСТЕМЫ.
+   --------------------------------------------------------------------------
+   ── ГЛАВНАЯ ИДЕЯ ЭТОГО ФАЙЛА ─────────────────────────────────────────────
+   Здесь НЕТ ни одного конкретного цвета. Только РОЛИ:
+
+       --color-canvas    фон страницы
+       --color-ink       основной текст        (читать)
+       --color-accent    главное действие      (нажимать)
+       ...
+
+   Конкретные значения этих ролей задают темы — отдельные файлы в
+   `src/themes/`. Поэтому смена оформления сводится к смене одного атрибута:
+
+       <html data-theme="aegean">    ← мрамор и золото
+       <html data-theme="oracle">    ← янтарный монохром
+       <html data-theme="gibson">    ← фосфорно-зелёный CRT
+
+   Ни один компонент при этом не меняется. Это и есть смысл дизайн-системы:
+   компоненты знают про РОЛИ, темы знают про ЦВЕТА.
+
+   ── ЧТО ЗДЕСЬ ЛЕЖИТ ──────────────────────────────────────────────────────
+     1. @import tailwindcss
+     2. @import тем оформления
+     3. @theme — объявление имён токенов и значений по умолчанию
+     4. базовые стили (фон, развёртка, скроллбар, выделение)
+     5. компонентные классы (.term-panel, .term-btn, ...)
+
+   Подробный разбор — в docs/12-dizayn-i-temy.md.
+   ========================================================================== */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* --------------------------------------------------------------------------
+   ТЕМЫ.
+   Каждый файл описывает один вариант оформления: переопределяет значения
+   токенов и добавляет свои декоративные параметры.
+
+   Порядок важен: файлы читаются сверху вниз, и если два селектора
+   `html[data-theme=...]` совпадут — победит последний. Совпасть они
+   не могут (у каждой темы свой id), так что порядок здесь — просто
+   группировка «от светлой к тёмной».
+   -------------------------------------------------------------------------- */
+@import "../themes/aegean.css";
+@import "../themes/oracle.css";
+@import "../themes/gibson.css";
+/* Светлая «книжная» тема — доказательство, что система умеет не только
+   менять оттенки, но и полностью менять характер интерфейса. */
+@import "../themes/alexandria.css";
+
+/* ==========================================================================
+   1. ДИЗАЙН-ТОКЕНЫ
+   --------------------------------------------------------------------------
+   Блок @theme — новинка Tailwind CSS 4. Всё, что объявлено здесь:
+     * становится CSS-переменной (--color-ink и т. д.);
+     * автоматически порождает утилиты (text-ink, bg-surface, border-line…).
+
+   Значения ниже — «страховка»: они совпадают с темой aegean и применяются,
+   если у <html> почему-то нет атрибута data-theme. При обычной работе их
+   перекрывают файлы тем.
+   ========================================================================== */
+@theme {
+  /* ---- Фоны ------------------------------------------------------------ */
+  --color-canvas: #080b14; /* фон страницы */
+  --color-surface: #0e1422; /* фон панелей */
+  --color-surface-2: #172136; /* вложенные блоки, дорожки ползунков */
+
+  /* ---- Текст: три уровня важности --------------------------------------
+     Даже самый бледный уровень обязан оставаться читаемым. */
+  --color-ink: #f2ece0;
+  --color-ink-muted: #c0b49a;
+  --color-ink-faint: #948a76;
+
+  /* ---- Линии и рамки (только для границ, не для текста!) --------------- */
+  --color-line: #2b3550;
+  --color-line-strong: #46557a;
+
+  /* ---- Акценты --------------------------------------------------------- */
+  --color-accent: #e8b53f;
+  --color-accent-2: #d05a3e;
+  --color-accent-3: #4fb3d9;
+  --color-alert: #ff5f52;
+  --color-on-accent: #0d1017;
+
+  /* ---- ФОРМА И ДЕКОР ----------------------------------------------------
+     Это вторая половина темы, не менее важная, чем цвета.
+
+     Цвета отвечают на вопрос «как выглядит», а эти параметры — на вопрос
+     «какой это вообще интерфейс»: жёсткий терминал или мягкая книга.
+
+     Уровень 1 (объявлено здесь, меняется через @theme)
+       --radius-panel      скругление панелей
+       --radius-control    скругление кнопок и полей ввода
+
+     Уровень 2 (объявляется ТОЛЬКО в файлах тем — значения по умолчанию
+     подставляются через var(..., fallback) прямо в правилах ниже)
+       --corner-size       размер декоративных уголков (0 = выключить)
+       --scanline-alpha    плотность полос развёртки (0 = выключить ЭЛТ)
+       --vignette-alpha    затемнение по краям (0 = выключить)
+       --glow-alpha        сила свечения текста (0 = выключить)
+       --motif-opacity     прозрачность орнаментов
+
+     Именно благодаря им возможна, например, светлая «книжная» тема:
+     достаточно выключить ЭЛТ-эффекты и скруглить углы. */
+  --radius-panel: 0px;
+  --radius-control: 0px;
+
+  /* ---- Шрифт ------------------------------------------------------------
+     var(--font-terminal) подставляет next/font (см. src/app/layout.tsx).
+     Дальше — системные моноширинные запасные варианты: если Google Fonts
+     недоступен, интерфейс останется моноширинным и не развалится. */
+  --font-mono: var(--font-terminal), ui-monospace, "SFMono-Regular", "Cascadia Mono", "Courier New", monospace;
+
+  /* ---- Анимации -------------------------------------------------------- */
+  --animate-blink: blink 1s steps(1, end) infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ==========================================================================
+   2. КЛЮЧЕВЫЕ КАДРЫ
+   ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Мигающий курсор. steps(1, end) делает мигание РЕЗКИМ, без плавного
+   затухания — именно так мигает курсор в терминале. */
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
   }
 }
 
+/* Медленное смещение полос развёртки. Смещение ровно на период полос,
+   поэтому цикл бесшовный и «шва» не видно. */
+@keyframes scanline-drift {
+  from {
+    background-position-y: 0;
+  }
+  to {
+    background-position-y: 4px;
+  }
+}
+
+/* Мягкое появление — используется для списков и панелей. */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   3. БАЗОВЫЕ СТИЛИ
+   ========================================================================== */
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  /* Лёгкая разрядка: моноширинные шрифты в мелком кегле слипаются. */
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- ЭФФЕКТ ЭЛТ-МОНИТОРА ------------------------------------------------
+   Один псевдоэлемент накрывает весь экран полосами развёртки и виньеткой.
+   Плотность полос приходит из темы через --scanline-alpha. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* КРИТИЧНО: без этого невидимый слой перехватил бы все клики,
+     и ни одна кнопка не нажималась бы. Классическая ошибка №1
+     при работе с полноэкранными оверлеями. */
+  pointer-events: none;
+  z-index: 50;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, calc(var(--scanline-alpha, 0.18) * 1.4)) 3px,
+      rgba(0, 0, 0, calc(var(--scanline-alpha, 0.18) * 1.4)) 4px
+    ),
+    radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(0, 0, 0, var(--vignette-alpha, 0.5)) 100%
+    );
+  animation: scanline-drift 0.6s linear infinite;
+}
+
+/* ---- ДОСТУПНОСТЬ: уважение к prefers-reduced-motion ---------------------
+   Мерцание и полосы — не только «стильно». Для людей с эпилепсией,
+   мигренью или вестибулярными расстройствами это физически болезненно.
+   Операционная система передаёт предпочтение пользователя, и сайт обязан
+   его выполнить. Это не вежливость, а требование доступности. */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Выделение текста ---------------------------------------------------
+   Инвертируем цвета, как это делает сам терминал. */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* ---- Полоса прокрутки ---------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-line);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border: 2px solid var(--color-surface);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}
+
+/* Firefox использует другие свойства. Такова реальность фронтенда. */
+* {
+  scrollbar-color: var(--color-line-strong) var(--color-surface);
+  scrollbar-width: thin;
+}
+
+/* ==========================================================================
+   4. КОМПОНЕНТНЫЕ КЛАССЫ
+   --------------------------------------------------------------------------
+   Повторяющиеся элементы интерфейса. Все они используют ТОЛЬКО роли-токены,
+   поэтому автоматически подстраиваются под любую тему.
+   ========================================================================== */
+
+@layer components {
+  /* ---- Панель -----------------------------------------------------------
+     Двойная рамка: внешняя линия плюс внутреннее свечение. Плюс декоративные
+     уголки — намёк на античную архитектуру (угловые акротерии фронтона). */
+  .term-panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    /* Скругление приходит из темы: 0 у терминальных тем, больше нуля
+       у «мягких». Один и тот же компонент выглядит по-разному. */
+    border-radius: var(--radius-panel);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--color-line-strong) 45%, transparent),
+      inset 0 1px 0 0 color-mix(in srgb, var(--color-ink) 4%, transparent);
+    position: relative;
+  }
+
+  .term-panel::before,
+  .term-panel::after {
+    content: "";
+    position: absolute;
+    width: var(--corner-size, 12px);
+    height: var(--corner-size, 12px);
+    border-color: var(--color-accent);
+    /* Уголки полупрозрачные: они декор и не должны спорить с содержимым. */
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .term-panel::before {
+    top: -1px;
+    left: -1px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+  .term-panel::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+  }
+
+  /* ---- Заголовок панели -------------------------------------------------
+     ЗОЛОТОЙ (accent), а не приглушённый: заголовок — это ориентир,
+     он должен находиться мгновенно. */
+  .term-title {
+    font-size: 0.6875rem; /* 11px */
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) calc(var(--glow-alpha, 0.35) * 100%), transparent);
+  }
+
+  /* ---- Кнопка -----------------------------------------------------------
+     Инверсия при наведении — базовый жест терминальных интерфейсов. */
+  .term-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-control);
+    background-color: transparent;
+    color: var(--color-accent);
+    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+      background-color 90ms linear,
+      color 90ms linear,
+      border-color 90ms linear,
+      box-shadow 90ms linear;
+    appearance: none;
+  }
+
+  .term-btn:hover:not(:disabled),
+  .term-btn:focus-visible {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    outline: none;
+  }
+
+  .term-btn:disabled {
+    border-color: var(--color-line);
+    /* Даже неактивная кнопка остаётся различимой — но явно «погасшей». */
+    color: var(--color-ink-faint);
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* Модификатор «опасное действие». */
+  .term-btn-danger {
+    border-color: color-mix(in srgb, var(--color-alert) 55%, transparent);
+    color: var(--color-alert);
+  }
+  .term-btn-danger:hover:not(:disabled),
+  .term-btn-danger:focus-visible {
+    background-color: var(--color-alert);
+    color: var(--color-on-accent);
+    border-color: var(--color-alert);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-alert) 40%, transparent);
+  }
+
+  /* Модификатор «выбрано / активно». */
+  .term-btn-active {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    border-color: var(--color-accent);
+  }
+
+  /* ---- Поле ввода -------------------------------------------------------- */
+  .term-input {
+    background-color: color-mix(in srgb, var(--color-canvas) 80%, black);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    padding: 0.35rem 0.55rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    letter-spacing: inherit;
+    width: 100%;
+    outline: none;
+    transition: border-color 90ms linear;
+  }
+
+  .term-input::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  .term-input:focus {
+    border-color: var(--color-accent);
+    box-shadow: inset 0 0 10px color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+
+  /* ---- Строка списка треков ---------------------------------------------
+     Слева — «корешок» как у книжного тома: цветная полоса, которая
+     загорается у играющего трека. */
+  .track-row {
+    display: grid;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-left: 2px solid transparent;
+    min-width: 0;
+    transition: background-color 70ms linear;
+  }
+
+  .track-row:hover {
+    background-color: color-mix(in srgb, var(--color-accent) 7%, transparent);
+    border-left-color: var(--color-line-strong);
+    cursor: pointer;
+  }
+
+  .track-row[data-playing="true"] {
+    background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    border-left-color: var(--color-accent);
+  }
+
+  /* ---- Текстовые эффекты ------------------------------------------------- */
+
+  /* Мигающий курсор. Пустой <span> с этим классом. */
+  .cursor-blink {
+    display: inline-block;
+    width: 0.55em;
+    height: 1em;
+    background-color: currentColor;
+    vertical-align: text-bottom;
+    animation: var(--animate-blink);
+  }
+
+  /* Свечение — используется умеренно, только на заголовках и акцентах.
+     Много светящегося текста = нечитаемый интерфейс. */
+  .glow {
+    text-shadow: 0 0 6px color-mix(in srgb, currentColor calc(var(--glow-alpha, 0.35) * 100%), transparent);
+  }
+
+  /* Разделитель из символов. Цвет — линия, а не текст: это декор. */
+  .ascii-rule {
+    color: var(--color-line-strong);
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  /* ---- Греческий орнамент ------------------------------------------------
+     Полоса-фриз под заголовком: тонкая линия с цветными «триглифами».
+     Реализована на градиентах, без картинок — ноль запросов к сети.
+     Дорический фриз состоял из чередующихся триглифов (три вертикальных
+     выступа) и метоп (гладких плит) — отсюда и ритм полосок. */
+  .motif-frieze {
+    height: 7px;
+    background-image:
+      /* верхний и нижний «рельсы» фриза */
+      linear-gradient(to bottom, var(--color-line-strong) 0 1px, transparent 1px 6px, var(--color-line-strong) 6px 7px),
+      /* триглифы */
+      repeating-linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-accent) 65%, transparent) 0 3px,
+        transparent 3px 6px,
+        color-mix(in srgb, var(--color-accent) 65%, transparent) 6px 9px,
+        transparent 9px 12px,
+        color-mix(in srgb, var(--color-accent) 65%, transparent) 12px 15px,
+        transparent 15px 32px
+      );
+    background-size:
+      100% 7px,
+      100% 4px;
+    background-position:
+      0 0,
+      0 1.5px;
+    background-repeat: no-repeat, repeat-x;
+    opacity: var(--motif-opacity, 0.85);
+  }
+
+  /* ---- Греческий орнамент: МЕАНДР --------------------------------------
+     Меандр (греческий ключ) — непрерывная линия, складывающаяся в спирали.
+     Это самый узнаваемый орнамент античности; им украшали фризы храмов.
+
+     ── КАК ЭТО СДЕЛАНО БЕЗ КАРТИНОК ──────────────────────────────────────
+     Использован приём mask-image с SVG, вшитым прямо в CSS как data-URI:
+       * SVG-контур работает как «трафарет» (маска) по своей прозрачности;
+       * цвет заливки контура задаём через background-color: currentColor.
+
+     Почему не обычная картинка: тогда цвет орнамента пришлось бы зашить
+     в файл, и он не менялся бы при смене темы. А с маской орнамент красится
+     чем угодно — например, классом text-accent у родителя.
+
+     ── ПОЧЕМУ КОНТУР НЕ РВЁТСЯ НА СТЫКАХ ─────────────────────────────────
+     Линия заканчивается на правом краю плитки (x=12) ровно на той же высоте
+     (y=11), где начинается следующая плитка (x=0). Поэтому при повторе
+     repeat-x линия выглядит непрерывной. */
+  .motif-meander {
+    height: 12px;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M0 11h12V2H3v6h6' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M0 11h12V2H3v6h6' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    -webkit-mask-size: 12px 12px;
+    mask-size: 12px 12px;
+    /* Прозрачность из темы: 0 полностью убирает орнамент. */
+    opacity: var(--motif-opacity, 0.9);
+  }
+
+  /* Мягкое появление блока. Короткое (180 мс) — интерфейс должен
+     отзываться мгновенно, а не «вплывать». */
+  .fade-up {
+    animation: fade-up 180ms ease-out both;
+  }
+}
+
+/* ==========================================================================
+   5. ПОЛЗУНКИ (ПЕРЕМОТКА И ГРОМКОСТЬ)
+   --------------------------------------------------------------------------
+   У <input type="range"> в каждом браузере свои вендорные псевдоэлементы.
+   Их приходится дублировать: если записать оба селектора через запятую,
+   браузер отбросит ВСЁ правило, потому что не знает чужой псевдоэлемент.
+   ========================================================================== */
+
+.term-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Chrome / Safari / Edge */
+.term-range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+}
+.term-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 16px;
+  /* Прямоугольный ползунок, как у старой техники — никаких кружков. */
+  background: var(--color-accent);
+  border: 1px solid var(--color-canvas);
+  margin-top: -5px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+/* Firefox */
+.term-range::-moz-range-track {
+  height: 6px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-line);
+}
+.term-range::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  border-radius: 0;
+  background: var(--color-accent);
+  border: 1px solid var(--color-canvas);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 60%, transparent);
+}
+
+/* Фокус с клавиатуры обязателен: пользователь, который не может работать
+   мышью, должен видеть, где он находится. */
+.term-range:focus-visible {
+  outline: 1px solid var(--color-accent-3);
+  outline-offset: 4px;
 }

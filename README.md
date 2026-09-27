@@ -1,36 +1,219 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+    ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+   █  Ο Ρ Φ Ε Υ Σ  ·  Φ Ω Ν Η   █
+    ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# ORPHEUS.BBS
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Локальный музыкальный плеер: **положил mp3 в папку → открыл браузер → слушаешь
+свою музыку**. Без облаков, подписок, рекламы и аккаунтов.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> **ΟΡΦΕΥΣ** — Орфей, мифический певец, чья музыка укрощала зверей и деревья.
+> **.BBS** — Bulletin Board System, электронные доски объявлений, на которых
+> выросла хакерская культура девяностых и откуда родом эстетика фильма
+> «Хакеры» (1995).
 
-## Learn More
+Проект **учебный**. Код написан с максимально подробными комментариями на
+русском — чтобы его можно было читать как учебник по TypeScript, React,
+Next.js, Bun и SQLite. Отдельная папка [`docs/`](docs/README.md) содержит
+разбор всех технологий, которые здесь используются.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Четыре темы оформления
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Оформление полностью вынесено из компонентов: дизайн описан **ролями**
+(`ink` — читать, `accent` — действовать, `canvas` — фон), а конкретные цвета
+задают темы. Переключаются в боковой панели, хранятся в cookie.
 
-## Deploy on Vercel
+| Тема | Идея |
+| --- | --- |
+| **Эгейское море** (по умолчанию) | мрамор, золото и ночная синева — античный храм в терминале |
+| **Дельфийский оракул** | янтарный монохром — так выглядели первые монохромные мониторы |
+| **Гибсон** | фосфорно-зелёный CRT — прямая отсылка к фильму «Хакеры» |
+| **Александрия** | **светлая**: папирус и чернила, без ЭЛТ-эффектов, со скруглёнными углами |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Добавить свою тему = создать один CSS-файл и добавить строку в реестр.
+Подробности — в [`src/themes/README.md`](src/themes/README.md) и
+[`docs/12-dizayn-i-temy.md`](docs/12-dizayn-i-temy.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+
+## Что умеет
+
+| Возможность | Где посмотреть в коде |
+| --- | --- |
+| Сканирование папки с музыкой и чтение тегов (ID3, FLAC, M4A, OGG) | `src/lib/scanner/` |
+| Инкрементальный скан: повторный проход по библиотеке за секунды | `src/lib/scanner/index.ts` |
+| Извлечение обложек альбомов с дедупликацией по SHA-1 | `src/lib/scanner/metadata.ts` |
+| Настоящий HTTP-стриминг с поддержкой `Range` (мгновенная перемотка) | `src/app/api/tracks/[id]/stream/route.ts` |
+| Поиск по названию, исполнителю, альбому, имени файла (работает с кириллицей) | `src/lib/db/track-queries.ts` |
+| Сортировка, фильтр «только избранное» | `src/app/page.tsx` |
+| Плейлисты: создание, переименование, добавление и удаление треков | `src/app/playlists/` |
+| История прослушиваний + топ треков по количеству включений | `src/lib/db/history-queries.ts` |
+| «Продолжить слушать» — плеер помнит позицию | `src/components/library/ContinueListening.tsx` |
+| Плеер: очередь, перемешивание, повтор, громкость, горячие клавиши | `src/components/player/player-context.tsx` |
+| Четыре переключаемые темы оформления (греческая античность × хакеры 90-х) | `src/themes/` |
+| **Деплой через Docker одной командой** | `Dockerfile`, `docker-compose.yml` |
+| Тесты на Bun (защита от регрессий, включая бесконечный цикл запросов) | `src/lib/search-url.test.ts` |
+| Скрипт замера памяти и процессора | `scripts/stats.sh` |
+
+---
+
+## Деплой через Docker (основной способ)
+
+Это главный и рекомендуемый путь: одна команда, ничего не надо устанавливать
+кроме Docker.
+
+```bash
+# 1. Положить музыку в папку ./music
+# 2. Запустить
+docker compose up -d --build
+
+# 3. Открыть http://localhost:3000 и нажать «СКАНИРОВАТЬ»
+```
+
+Всё. Дальше — три команды для управления:
+
+```bash
+docker compose logs -f     # смотреть логи
+docker compose ps          # статус (должно быть «healthy»)
+docker compose down        # остановить; данные НЕ удалятся
+```
+
+**Проверено на реальном запуске:** сборка образа → контейнер в статусе
+`healthy` → все страницы отвечают, стриминг отдаёт `206 Partial Content`,
+обложки отдаются, темы переключаются, 404 настоящие. После
+`docker compose down` и повторного `up -d` библиотека и музыка на месте —
+повторное сканирование не требуется.
+
+### Что где лежит
+
+| На хосте | В контейнере | Зачем |
+| --- | --- | --- |
+| `./music` | `/music` (**только чтение**) | твоя музыка; приложение не может её испортить |
+| `./data` | `/data` | база SQLite и обложки — переживают удаление контейнера |
+
+### Настройки
+
+Создай файл `.env` рядом с `docker-compose.yml` — Docker Compose подхватит его
+автоматически:
+
+```bash
+cp .env.example .env
+```
+
+Полный разбор — в [`docs/10-docker.md`](docs/10-docker.md) (как всё устроено)
+и [`docs/14-deploy.md`](docs/14-deploy.md) (как вывести в интернет: VPS,
+домен, HTTPS, бэкапы).
+
+---
+
+## Запуск без Docker (для разработки)
+
+Нужен установленный [Bun](https://bun.sh).
+
+```bash
+bun install                # зависимости
+cp .env.example .env       # настройки
+bun run dev                # dev-сервер с горячей перезагрузкой
+```
+
+> ⚠️ Проект работает на рантайме **Bun**, потому что обращается к базе через
+> модуль `bun:sqlite`. Скрипты в `package.json` уже содержат нужный флаг
+> `--bun`, поэтому запускай именно `bun run dev`, а не `next dev` напрямую.
+
+## Скрипты
+
+| Команда | Что делает |
+| --- | --- |
+| `bun run dev` | Dev-сервер с горячей перезагрузкой |
+| `bun run build` | Production-сборка |
+| `bun run start` | Запуск собранного приложения |
+| `bun run typecheck` | Проверка типов без запуска (`tsc --noEmit`) |
+| `bun run lint` | ESLint |
+| `bun run db:reset` | Удалить базу (данные пересоздаст сканирование) |
+| `bun run test` | Тесты (сейчас 13 штук: логика поиска и защита от циклов) |
+| `bun run stats` | Сколько памяти и процессора ест проект |
+| `bun run check:loops` | Проверка в браузере, не зациклилась ли страница |
+| `bunx drizzle-kit generate` | Сгенерировать миграцию после изменения схемы |
+
+---
+
+## Стек
+
+```
+Frontend    Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4
+Backend     Next.js Route Handlers + Server Components
+Runtime     Bun (bun:sqlite, bun install, bun test)
+Database    SQLite (файл data/music.db)
+ORM         Drizzle ORM + drizzle-kit
+Metadata    music-metadata
+Deploy      Docker + docker compose
+```
+
+Сознательно **не используются**: Redis, PostgreSQL, отдельный backend,
+микросервисы, Kubernetes, облачные сервисы, сложная авторизация. Проект должен
+оставаться лёгким и запускаться за секунды — это осознанное инженерное решение,
+а не недоработка.
+
+---
+
+## Структура
+
+```
+orpheus-bbs/
+├── src/
+│   ├── app/            маршруты (страницы и API)
+│   ├── components/     React-компоненты
+│   ├── config/         брендинг (имя, слоганы) — в одном месте
+│   ├── themes/         🎨 темы оформления: реестр + CSS-файлы
+│   └── lib/            бизнес-логика: db, scanner, утилиты
+├── drizzle/            SQL-миграции
+├── docs/               📚 учебные материалы — начни отсюда
+├── music/              твоя музыка (в git не попадает)
+├── data/               база и обложки (в git не попадает)
+├── Dockerfile
+├── docker-compose.yml
+└── AGENTS.md           правила проекта для ИИ-агентов
+```
+
+Полный разбор структуры — в [`docs/09-struktura-proekta.md`](docs/09-struktura-proekta.md).
+
+---
+
+## Как читать этот проект
+
+Если ты учишься так же, как автор, — начни не с кода, а с
+[`docs/README.md`](docs/README.md). Там есть порядок чтения: от общих понятий
+к конкретным файлам.
+
+Короткая версия для нетерпеливых:
+
+1. `src/lib/types.ts` — какие данные вообще ходят по проекту.
+2. `src/lib/db/schema.ts` — какие таблицы есть в базе.
+3. `src/lib/db/client.ts` — как приложение подключается к SQLite.
+4. `src/lib/scanner/index.ts` — как музыка попадает в базу.
+5. `src/app/api/tracks/[id]/stream/route.ts` — как байты едут в браузер.
+6. `src/components/player/player-context.tsx` — как всё это играет.
+7. `src/app/page.tsx` — как данные превращаются в страницу.
+
+---
+
+## Горячие клавиши плеера
+
+| Клавиша | Действие |
+| --- | --- |
+| `Пробел` | Играть / пауза |
+| `←` / `→` | Перемотка на 5 секунд |
+| `↑` / `↓` | Громкость |
+| `N` / `P` | Следующий / предыдущий трек |
+
+---
+
+## Лицензия и назначение
+
+Личный учебный проект. Музыка, которую он индексирует, — твоя собственность;
+плеер лишь читает файлы с диска и ничего никуда не отправляет.

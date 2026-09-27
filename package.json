@@ -1,24 +1,35 @@
 {
-  "name": "personal-music-player",
+  "name": "orpheus-bbs",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "db:reset": "rm -f data/music.db && echo 'База удалена. Перезапусти скан библиотеки.'",
+    "test": "bun test",
+    "stats": "./scripts/stats.sh",
+    "stats:watch": "./scripts/stats.sh --watch",
+    "stats:docker": "./scripts/stats.sh --docker",
+    "check:loops": "bun scripts/check-loops.mjs"
   },
   "dependencies": {
+    "drizzle-orm": "^0.45.3",
+    "music-metadata": "^11.16.1",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bun": "^1.4.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
